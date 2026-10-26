@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GhostBot · AI Menu Assistant</title>
+
+  <!-- ============================================================
+       PWA META TAGS
+       ============================================================ -->
+  <meta name="theme-color" content="#050a10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GhostBot">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="description" content="GhostBot — AI-powered corporate menu assistant. Search the full menu instantly.">
+  <meta name="application-name" content="GhostBot">
+
+  <!-- Web App Manifest (inlined via blob) -->
+  <link id="manifestLink" rel="manifest">
+
+  <!-- Apple Touch Icon (inline SVG) -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%23050a10'/%3E%3Ctext x='96' y='130' font-size='110' font-weight='800' font-family='monospace' fill='%232db4dc' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23050a10'/%3E%3Ctext x='32' y='45' font-size='36' font-weight='800' font-family='monospace' fill='%232db4dc' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
+
+  <style>
+    /* ============================================================
+       FUTURISTIC CORPORATE THEME
+       ============================================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg-deep: #050a10;
+      --bg-panel: #0a1119;
+      --bg-panel-light: #0f1822;
+      --bg-card: #101c26;
+      --border-subtle: rgba(45, 122, 155, 0.12);
+      --border-glow: rgba(45, 180, 220, 0.25);
+      --accent-primary: #2db4dc;
+      --accent-secondary: #4dd0e1;
+      --accent-glow: rgba(45, 180, 220, 0.2);
+      --text-primary: #e2eaf2;
+      --text-secondary: #8ba3b8;
+      --text-muted: #5a7288;
+      --success: #3dd68c;
+      --font-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    body {
+      background: var(--bg-deep);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+    }
+
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(45, 180, 220, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45, 180, 220, 0.025) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Radial glow behind container */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(45, 180, 220, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ============================================================
+       CONTAINER
+       ============================================================ */
+    .chat-container {
+      width: 100%;
+      max-width: 760px;
+      background: var(--bg-panel);
+      border-radius: 24px;
+      box-shadow:
+        0 0 0 1px rgba(45, 180, 220, 0.12),
+        0 30px 80px -20px rgba(0, 0, 0, 0.8),
+        0 0 120px -40px rgba(45, 180, 220, 0.12);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 740px;
+      position: relative;
+      z-index: 1;
+      border: 1px solid rgba(45, 180, 220, 0.08);
+    }
+
+    .chat-container::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 25px;
+      padding: 1px;
+      background: linear-gradient(135deg,
+          rgba(45, 180, 220, 0.3),
+          transparent 40%,
+          transparent 60%,
+          rgba(45, 180, 220, 0.15));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* ============================================================
+       DEVELOPER CREDIT BAR
+       ============================================================ */
+    .dev-credit-bar {
+      background: linear-gradient(90deg, #060c13, #0a1520, #060c13);
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(45, 180, 220, 0.06);
+      position: relative;
+      z-index: 4;
+    }
+
+    .dev-credit-bar .credit-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      letter-spacing: 0.4px;
+    }
+
+    .dev-credit-bar .credit-left .status-dot {
+      width: 5px;
+      height: 5px;
+      background: var(--success);
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 8px rgba(61, 214, 140, 0.5);
+      animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .dev-credit-bar a {
+      color: var(--accent-secondary);
+      text-decoration: none;
+      font-size: 0.68rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      letter-spacing: 0.4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 30px;
+      border: 1px solid rgba(45, 180, 220, 0.1);
+      background: rgba(45, 180, 220, 0.04);
+      transition: all 0.25s ease;
+    }
+
+    .dev-credit-bar a:hover {
+      background: rgba(45, 180, 220, 0.1);
+      border-color: rgba(45, 180, 220, 0.25);
+      box-shadow: 0 0 20px -4px rgba(45, 180, 220, 0.2);
+      color: #6ee0f5;
+    }
+
+    .dev-credit-bar a .gh-icon {
+      font-size: 0.8rem;
+      line-height: 1;
+    }
+
+    /* ============================================================
+       HEADER
+       ============================================================ */
+    .chat-header {
+      background: linear-gradient(180deg, #0c1520 0%, #080e16 100%);
+      color: white;
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid rgba(45, 180, 220, 0.08);
+      position: relative;
+      overflow: hidden;
+      z-index: 3;
+    }
+
+    .chat-header::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      right: -30px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(45, 180, 220, 0.08), transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .chat-header::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(45, 180, 220, 0.4), transparent);
+      animation: scanline 4s ease-in-out infinite;
+    }
+
+    @keyframes scanline {
+      0%, 100% { opacity: 0.3; transform: translateX(-100%); }
+      50% { opacity: 1; transform: translateX(100%); }
+    }
+
+    .chat-header .logo {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(145deg, #0d2a3a, #071820);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 22px;
+      color: var(--accent-primary);
+      letter-spacing: -1px;
+      box-shadow:
+        0 0 0 1px rgba(45, 180, 220, 0.2),
+        0 0 20px rgba(45, 180, 220, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      position: relative;
+      z-index: 1;
+      transition: all 0.3s ease;
+      font-family: var(--font-mono);
+    }
+
+    .chat-header .logo:hover {
+      box-shadow:
+        0 0 0 1px rgba(45, 180, 220, 0.4),
+        0 0 30px rgba(45, 180, 220, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .chat-header .logo::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 20px;
+      border: 1px solid rgba(45, 180, 220, 0.15);
+      animation: logoPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes logoPulse {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.05); }
+    }
+
+    .chat-header .header-text {
+      flex: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    .chat-header h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: #eef4fa;
+      text-shadow: 0 0 30px rgba(45, 180, 220, 0.15);
+    }
+
+    .chat-header h1 .ai-tag {
+      font-size: 0.58rem;
+      background: linear-gradient(135deg, rgba(45, 180, 220, 0.2), rgba(45, 180, 220, 0.08));
+      padding: 3px 10px;
+      border-radius: 30px;
+      color: var(--accent-secondary);
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      border: 1px solid rgba(45, 180, 220, 0.2);
+      font-family: var(--font-mono);
+      box-shadow: 0 0 16px rgba(45, 180, 220, 0.08);
+    }
+
+    .chat-header .subtitle {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-top: 3px;
+      letter-spacing: 0.3px;
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chat-header .subtitle::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      background: var(--success);
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 8px rgba(61, 214, 140, 0.5);
+      animation: pulse-dot 2s infinite;
+    }
+
+    .chat-header .time-badge {
+      background: rgba(45, 180, 220, 0.06);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--accent-secondary);
+      border: 1px solid rgba(45, 180, 220, 0.12);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+      backdrop-filter: blur(8px);
+      font-family: var(--font-mono);
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 20px rgba(45, 180, 220, 0.04);
+    }
+
+    .chat-header .time-badge .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 1.8s infinite;
+      box-shadow: 0 0 8px rgba(61, 214, 140, 0.6);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(61, 214, 140, 0.4); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(61, 214, 140, 0); }
+    }
+
+    /* ============================================================
+       CHAT MESSAGES
+       ============================================================ */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 24px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--bg-panel);
+      scroll-behavior: smooth;
+      position: relative;
+    }
+
+    .chat-messages::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: rgba(45, 180, 220, 0.15);
+      border-radius: 6px;
+    }
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+      background: rgba(45, 180, 220, 0.3);
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      max-width: 88%;
+      animation: fadeIn 0.3s ease;
+      position: relative;
+      z-index: 1;
+    }
+
+    .message.bot { align-self: flex-start; }
+    .message.user { align-self: flex-end; flex-direction: row-reverse; }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 600;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: all 0.25s ease;
+    }
+
+    .bot .avatar {
+      background: linear-gradient(145deg, #0d2a3a, #071820);
+      color: var(--accent-primary);
+      border: 1px solid rgba(45, 180, 220, 0.15);
+      box-shadow: 0 0 20px rgba(45, 180, 220, 0.06);
+      font-size: 19px;
+    }
+
+    .user .avatar {
+      background: linear-gradient(145deg, #132a3d, #0a1a28);
+      color: var(--accent-secondary);
+      border: 1px solid rgba(45, 180, 220, 0.12);
+      box-shadow: 0 0 20px rgba(45, 180, 220, 0.04);
+      font-size: 17px;
+    }
+
+    .bubble {
+      padding: 14px 20px;
+      border-radius: 18px;
+      font-size: 0.93rem;
+      line-height: 1.65;
+      word-break: break-word;
+      position: relative;
+    }
+
+    .bot .bubble {
+      background: var(--bg-card);
+      border: 1px solid rgba(45, 180, 220, 0.08);
+      border-top-left-radius: 4px;
+      color: var(--text-primary);
+      box-shadow: 0 4px 20px -6px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    }
+
+    .user .bubble {
+      background: linear-gradient(145deg, #0f2536, #0a1a28);
+      border: 1px solid rgba(45, 180, 220, 0.1);
+      color: #d4e6f5;
+      border-top-right-radius: 4px;
+      box-shadow: 0 4px 20px -6px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    }
+
+    /* ============================================================
+       AI FLAVOR TEXT
+       ============================================================ */
+    .ai-flavor {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(45, 180, 220, 0.06);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      letter-spacing: 0.2px;
+      line-height: 1.4;
+    }
+
+    .ai-flavor .spark {
+      font-style: normal;
+      font-size: 0.85rem;
+      color: var(--accent-primary);
+      text-shadow: 0 0 12px rgba(45, 180, 220, 0.5);
+      animation: sparkPulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes sparkPulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; text-shadow: 0 0 20px rgba(45, 180, 220, 0.8); }
+    }
+
+    /* ============================================================
+       SUGGESTION LIST
+       ============================================================ */
+    .suggestion-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .suggestion-item {
+      background: rgba(16, 28, 38, 0.8);
+      border: 1px solid rgba(45, 180, 220, 0.08);
+      border-radius: 14px;
+      padding: 13px 18px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(4px);
+    }
+
+    .suggestion-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--accent-primary), var(--accent-secondary));
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      box-shadow: 0 0 12px rgba(45, 180, 220, 0.4);
+    }
+
+    .suggestion-item::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(45, 180, 220, 0.03), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      pointer-events: none;
+    }
+
+    .suggestion-item:hover {
+      background: rgba(20, 40, 55, 0.9);
+      border-color: rgba(45, 180, 220, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 0 30px -8px rgba(45, 180, 220, 0.1);
+    }
+
+    .suggestion-item:hover::before { opacity: 1; }
+    .suggestion-item:hover::after { opacity: 1; }
+
+    .suggestion-item .item-name {
+      font-weight: 500;
+      flex: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    .suggestion-item .item-price {
+      font-weight: 700;
+      color: var(--accent-secondary);
+      font-size: 0.82rem;
+      background: rgba(45, 180, 220, 0.08);
+      padding: 4px 14px;
+      border-radius: 30px;
+      white-space: nowrap;
+      margin-left: 14px;
+      font-family: var(--font-mono);
+      letter-spacing: 0.3px;
+      border: 1px solid rgba(45, 180, 220, 0.06);
+      transition: all 0.2s;
+      position: relative;
+      z-index: 1;
+    }
+
+    .suggestion-item:hover .item-price {
+      background: rgba(45, 180, 220, 0.15);
+      border-color: rgba(45, 180, 220, 0.15);
+      box-shadow: 0 0 16px rgba(45, 180, 220, 0.1);
+    }
+
+    /* ============================================================
+       ITEM DETAIL CARD
+       ============================================================ */
+    .item-detail-card {
+      background: linear-gradient(145deg, #0f1d2a, #0a141e);
+      border: 1px solid rgba(45, 180, 220, 0.1);
+      border-radius: 18px;
+      padding: 20px 22px;
+      margin-top: 12px;
+      box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      position: relative;
+      overflow: hidden;
+      border-left: 3px solid var(--accent-primary);
+    }
+
+    .item-detail-card::before {
+      content: '';
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 140px;
+      height: 140px;
+      background: radial-gradient(circle, rgba(45, 180, 220, 0.06), transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .item-detail-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(45, 180, 220, 0.25), transparent);
+    }
+
+    .item-detail-card .detail-name {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #e8f0f8;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      letter-spacing: -0.2px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .item-detail-card .detail-price {
+      color: white;
+      font-size: 0.88rem;
+      font-weight: 700;
+      background: linear-gradient(145deg, rgba(45, 180, 220, 0.25), rgba(45, 180, 220, 0.1));
+      padding: 6px 18px;
+      border-radius: 30px;
+      box-shadow: 0 4px 16px -4px rgba(45, 180, 220, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+      font-family: var(--font-mono);
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(45, 180, 220, 0.15);
+    }
+
+    .item-detail-card .detail-desc {
+      font-size: 0.87rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin: 12px 0 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .item-detail-card .detail-meta {
+      font-size: 0.73rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      border-top: 1px solid rgba(45, 180, 220, 0.06);
+      padding-top: 14px;
+      margin-top: 4px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .item-detail-card .detail-meta span {
+      background: rgba(45, 180, 220, 0.04);
+      padding: 5px 14px;
+      border-radius: 30px;
+      font-weight: 500;
+      font-family: var(--font-mono);
+      letter-spacing: 0.2px;
+      border: 1px solid rgba(45, 180, 220, 0.04);
+      transition: all 0.2s;
+    }
+
+    .item-detail-card .detail-meta span:hover {
+      background: rgba(45, 180, 220, 0.08);
+      border-color: rgba(45, 180, 220, 0.1);
+    }
+
+    /* ============================================================
+       INPUT AREA
+       ============================================================ */
+    .chat-input-area {
+      padding: 18px 24px 22px;
+      background: linear-gradient(180deg, #080e16 0%, #060b12 100%);
+      border-top: 1px solid rgba(45, 180, 220, 0.06);
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      position: relative;
+    }
+
+    .chat-input-area::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(45, 180, 220, 0.15), transparent);
+    }
+
+    .chat-input-area input {
+      flex: 1;
+      padding: 16px 22px;
+      border: 1px solid rgba(45, 180, 220, 0.1);
+      border-radius: 60px;
+      font-size: 0.93rem;
+      outline: none;
+      transition: all 0.3s ease;
+      background: rgba(10, 17, 25, 0.8);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      letter-spacing: 0.2px;
+      backdrop-filter: blur(8px);
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      user-select: text;
+    }
+
+    .chat-input-area input::placeholder {
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.2px;
+    }
+
+    .chat-input-area input:focus {
+      border-color: rgba(45, 180, 220, 0.35);
+      box-shadow: 0 0 0 4px rgba(45, 180, 220, 0.06), 0 0 30px -8px rgba(45, 180, 220, 0.15);
+      background: rgba(12, 22, 32, 0.9);
+    }
+
+    .chat-input-area button {
+      background: linear-gradient(145deg, #0d2a3a, #071820);
+      color: var(--accent-secondary);
+      border: 1px solid rgba(45, 180, 220, 0.2);
+      border-radius: 60px;
+      padding: 16px 30px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+      box-shadow: 0 6px 20px -8px rgba(0, 0, 0, 0.6), 0 0 30px -10px rgba(45, 180, 220, 0.1);
+      font-family: var(--font-mono);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chat-input-area button::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(45, 180, 220, 0.08), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .chat-input-area button:hover {
+      background: linear-gradient(145deg, #123a50, #0a1f2e);
+      border-color: rgba(45, 180, 220, 0.35);
+      box-shadow: 0 8px 28px -8px rgba(0, 0, 0, 0.7), 0 0 40px -10px rgba(45, 180, 220, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .chat-input-area button:hover::before { opacity: 1; }
+
+    .chat-input-area button:active {
+      transform: scale(0.97);
+      box-shadow: 0 4px 16px -6px rgba(0, 0, 0, 0.7), 0 0 20px -8px rgba(45, 180, 220, 0.15);
+    }
+
+    /* ============================================================
+       TYPING INDICATOR
+       ============================================================ */
+    .typing-indicator {
+      display: flex;
+      gap: 5px;
+      padding: 8px 0;
+      align-items: center;
+    }
+
+    .typing-indicator span {
+      width: 7px;
+      height: 7px;
+      background: var(--accent-primary);
+      border-radius: 50%;
+      animation: blink 1.2s infinite;
+      box-shadow: 0 0 10px rgba(45, 180, 220, 0.3);
+    }
+
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes blink {
+      0%, 80%, 100% {
+        opacity: 0.15;
+        transform: translateY(0);
+        box-shadow: 0 0 4px rgba(45, 180, 220, 0.1);
+      }
+      40% {
+        opacity: 1;
+        transform: translateY(-3px);
+        box-shadow: 0 0 16px rgba(45, 180, 220, 0.5);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ============================================================
+       TIME FOOTER / HINT
+       ============================================================ */
+    .time-footer {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-align: right;
+      margin-top: 10px;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      opacity: 0.7;
+    }
+
+    .time-footer .hint-icon { font-size: 0.8rem; }
+
+    .highlight {
+      background: rgba(45, 180, 220, 0.12);
+      padding: 0 3px;
+      border-radius: 3px;
+      font-weight: 500;
+      color: var(--accent-secondary);
+      border-bottom: 1px solid rgba(45, 180, 220, 0.2);
+    }
+
+    /* ============================================================
+       PWA INSTALL BANNER
+       ============================================================ */
+    .install-banner {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      background: linear-gradient(145deg, #0d2a3a, #071820);
+      border: 1px solid rgba(45, 180, 220, 0.25);
+      border-radius: 20px;
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.9), 0 0 60px -20px rgba(45, 180, 220, 0.2);
+      z-index: 9999;
+      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      max-width: 420px;
+      width: calc(100% - 40px);
+    }
+
+    .install-banner.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .install-banner .install-icon {
+      width: 42px;
+      height: 42px;
+      background: rgba(45, 180, 220, 0.1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      border: 1px solid rgba(45, 180, 220, 0.15);
+      flex-shrink: 0;
+    }
+
+    .install-banner .install-text {
+      flex: 1;
+    }
+
+    .install-banner .install-text strong {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+
+    .install-banner .install-text span {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .install-banner button {
+      background: linear-gradient(145deg, #2db4dc, #1f8ba8);
+      border: none;
+      border-radius: 30px;
+      padding: 10px 22px;
+      color: #050a10;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      letter-spacing: 0.3px;
+      transition: all 0.2s;
+      white-space: nowrap;
+      box-shadow: 0 4px 16px -4px rgba(45, 180, 220, 0.4);
+    }
+
+    .install-banner button:hover {
+      box-shadow: 0 6px 24px -4px rgba(45, 180, 220, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .install-banner .close-install {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .install-banner .close-install:hover { color: var(--text-primary); }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 640px) {
+      body { padding: 10px; }
+
+      .chat-container {
+        height: 94vh;
+        border-radius: 20px;
+        max-width: 100%;
+      }
+
+      .dev-credit-bar { padding: 7px 16px; }
+      .dev-credit-bar .credit-left { font-size: 0.62rem; }
+      .dev-credit-bar a { font-size: 0.62rem; padding: 3px 10px; }
+
+      .chat-header { padding: 16px 18px; gap: 12px; }
+      .chat-header h1 { font-size: 1rem; }
+      .chat-header .subtitle { font-size: 0.62rem; }
+      .chat-header .logo { width: 42px; height: 42px; font-size: 19px; border-radius: 14px; }
+      .chat-header .time-badge { font-size: 0.72rem; padding: 6px 14px; }
+
+      .bubble { font-size: 0.86rem; padding: 12px 16px; }
+
+      .chat-input-area { padding: 14px 16px 18px; gap: 10px; }
+      .chat-input-area input { padding: 14px 18px; font-size: 0.86rem; }
+      .chat-input-area button { padding: 14px 20px; }
+      .chat-input-area button span { display: none; }
+
+      .item-detail-card { padding: 16px 16px; }
+      .item-detail-card .detail-name { font-size: 0.95rem; }
+
+      .suggestion-item { font-size: 0.84rem; padding: 11px 14px; }
+      .suggestion-item .item-price { font-size: 0.76rem; padding: 3px 10px; }
+
+      .message { max-width: 92%; }
+      .avatar { width: 34px; height: 34px; font-size: 16px; }
+
+      .install-banner {
+        bottom: 16px;
+        padding: 12px 16px;
+        gap: 12px;
+      }
+      .install-banner .install-icon { width: 36px; height: 36px; font-size: 17px; }
+      .install-banner button { padding: 8px 16px; font-size: 0.75rem; }
+    }
+
+    @media (max-width: 400px) {
+      .chat-header h1 .ai-tag { font-size: 0.5rem; padding: 2px 7px; }
+      .chat-header .subtitle { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <!-- ========== DEVELOPER CREDIT BAR ========== -->
+    <div class="dev-credit-bar">
+      <div class="credit-left">
+        <span class="status-dot"></span>
+        <span>SYSTEM ONLINE</span>
+      </div>
+      <a href="https://github.com/settings/profile" target="_blank" rel="noopener noreferrer">
+        <span class="gh-icon">⌨</span>
+        Developed by GhostKmr
+      </a>
+    </div>
+
+    <!-- ========== HEADER ========== -->
+    <div class="chat-header">
+      <div class="logo">G</div>
+      <div class="header-text">
+        <h1>
+          GhostBot
+          <span class="ai-tag">AI</span>
+        </h1>
+        <div class="subtitle">Neural menu assistant · corporate edition</div>
+      </div>
+      <div class="time-badge">
+        <span class="dot"></span>
+        <span id="liveTime">--:--</span>
+      </div>
+    </div>
+
+    <!-- ========== CHAT MESSAGES ========== -->
+    <div class="chat-messages" id="chatMessages">
+      <!-- injected by JS -->
+    </div>
+
+    <!-- ========== INPUT ========== -->
+    <div class="chat-input-area">
+      <input type="text" id="userInput" placeholder="Query the menu matrix..." autocomplete="off" />
+      <button id="sendBtn">
+        <span>Search</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========== PWA INSTALL BANNER ========== -->
+  <div class="install-banner" id="installBanner">
+    <div class="install-icon">📲</div>
+    <div class="install-text">
+      <strong>Install GhostBot</strong>
+      <span>Add to home screen for instant access</span>
+    </div>
+    <button id="installBtn">Install</button>
+    <button class="close-install" id="closeInstall">×</button>
+  </div>
+
+  <script>
+    // ================================================================
+    // DISABLE RIGHT CLICK & DEVTOOLS
+    // ================================================================
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    document.addEventListener('keydown', (e) => {
+      // Disable F12
+      if (e.key === 'F12') { e.preventDefault(); return false; }
+      // Disable Ctrl+Shift+I / J / C
+      if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
+        e.preventDefault(); return false;
+      }
+      // Disable Ctrl+U (view source)
+      if (e.ctrlKey && e.key === 'u') { e.preventDefault(); return false; }
+      // Disable Ctrl+S (save)
+      if (e.ctrlKey && e.key === 's') { e.preventDefault(); return false; }
+    });
+
+    // ================================================================
+    // PWA MANIFEST (INLINED)
+    // ================================================================
+    const manifestData = {
+      name: "GhostBot — AI Menu Assistant",
+      short_name: "GhostBot",
+      description: "AI-powered corporate menu assistant. Search the full menu instantly.",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#050a10",
+      theme_color: "#050a10",
+      orientation: "portrait-primary",
+      scope: ".",
+      icons: [
+        {
+          src: "data:image/svg+xml," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+              <rect width="192" height="192" rx="42" fill="#050a10"/>
+              <text x="96" y="130" font-size="110" font-weight="800" font-family="monospace" fill="#2db4dc" text-anchor="middle">G</text>
+            </svg>
+          `),
+          sizes: "192x192",
+          type: "image/svg+xml",
+          purpose: "any"
+        },
+        {
+          src: "data:image/svg+xml," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+              <rect width="512" height="512" rx="112" fill="#050a10"/>
+              <text x="256" y="346" font-size="290" font-weight="800" font-family="monospace" fill="#2db4dc" text-anchor="middle">G</text>
+            </svg>
+          `),
+          sizes: "512x512",
+          type: "image/svg+xml",
+          purpose: "any maskable"
+        }
+      ]
+    };
+
+    const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+    const manifestUrl = URL.createObjectURL(manifestBlob);
+    document.getElementById('manifestLink').href = manifestUrl;
+
+    // ================================================================
+    // SERVICE WORKER (inline registration for PWA)
+    // ================================================================
+    if ('serviceWorker' in navigator) {
+      const swCode = `
+        const CACHE_NAME = 'ghostbot-v1';
+        const ASSETS = [
+          './',
+          'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'
+        ];
+
+        self.addEventListener('install', (event) => {
+          event.waitUntil(
+            caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS).catch(() => {}))
+          );
+          self.skipWaiting();
+        });
+
+        self.addEventListener('activate', (event) => {
+          event.waitUntil(
+            caches.keys().then((keys) =>
+              Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+            )
+          );
+          self.clients.claim();
+        });
+
+        self.addEventListener('fetch', (event) => {
+          if (event.request.method !== 'GET') return;
+          event.respondWith(
+            caches.match(event.request).then((cached) => {
+              const fetchPromise = fetch(event.request)
+                .then((response) => {
+                  if (response && response.status === 200) {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                  }
+                  return response;
+                })
+                .catch(() => cached);
+              return cached || fetchPromise;
+            })
+          );
+        });
+      `;
+
+      const swBlob = new Blob([swCode], { type: 'application/javascript' });
+      const swUrl = URL.createObjectURL(swBlob);
+
+      navigator.serviceWorker.register(swUrl).catch(() => {
+        // Service worker registration failed silently
+      });
+    }
+
+    // ================================================================
+    // PWA INSTALL PROMPT
+    // ================================================================
+    let deferredPrompt = null;
+    const installBanner = document.getElementById('installBanner');
+    const installBtn = document.getElementById('installBtn');
+    const closeInstall = document.getElementById('closeInstall');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      setTimeout(() => installBanner.classList.add('show'), 1200);
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        installBanner.classList.remove('show');
+      }
+      deferredPrompt = null;
+    });
+
+    closeInstall.addEventListener('click', () => {
+      installBanner.classList.remove('show');
+    });
+
+    window.addEventListener('appinstalled', () => {
+      installBanner.classList.remove('show');
+      deferredPrompt = null;
+    });
+
+    // ================================================================
+    // MENU DATA
+    // ================================================================
+    const menuData = [
+      { name: "Burrata Salad", price: 55.00, desc: "Marinated red and yellow cherry tomatoes, Kalamata olives, and a whole piece of burrata cheese, garnished with pine nuts. Served with pesto sauce and croutons. (350g)", meta: "365 kcal · Protein 12.4g · Fat 27.3g · Carbs 19.9g" },
+      { name: "Ceaser Salad", price: 45.00, desc: "Classic Caesar salad with crisp baby romaine lettuce, creamy Caesar dressing, crunchy croutons, shaved Parmesan cheese, topped with tender grilled chicken. (350g)", meta: "321 kcal · Protein 32.2g · Fat 53.2g · Carbs 5.7g" },
+      { name: "Beef Steak Rocca Salad", price: 55.00, desc: "Honey-glazed, tender shredded Wagyu beef on a bed of fresh rocket leaves (arugula), complemented by Parmesan cheese, cherry tomatoes, and garnished with walnuts. (220g)", meta: "465 kcal · Protein 41.5g · Fat 25.3g · Carbs 12.3g" },
+      { name: "Goat Cheese Salad", price: 48.00, desc: "Crisp lettuce, creamy goat cheese, sweet soaked raisins, crunchy walnuts, juicy cherry tomatoes, fresh green apple, rich balsamic sauce and balsamic glaze. (240g)", meta: "234 kcal · Protein 12g · Fat 15.37g · Carbs 6.97g" },
+      { name: "Chicken Mushroom Risotto", price: 55.00, desc: "Toasted mushrooms, chicken, and rice cooked in vegetable stock, finished with cream and cheese. Garnished with herb-roasted cherry tomatoes. (350g)", meta: "584 kcal · Protein 41.5g · Fat 20.6g · Carbs 56.6g" },
+      { name: "Butter Chicken with Rice", price: 60.00, desc: "Fresh tomatoes cooked with a cashew blend sauce, tandoor chicken, and a touch of mild butter and cream for a sweetened taste. Served with rice. (400g)", meta: "493 kcal · Protein 28.5g · Fat 14.3g · Carbs 63.3g" },
+      { name: "Spaghetti with Meatballs", price: 55.00, desc: "Classic spaghetti served with tender meatballs in a rich tomato sauce, topped with grated cheese. (420g)", meta: "530 kcal · Protein 37.2g · Fat 23.4g · Carbs 39.4g" },
+      { name: "Lamb Kabsa", price: 55.00, desc: "Rice cooked in lamb stock and caramelized onions, topped with poached lamb. Garnished with cooked and shredded almonds, cashew nuts, raisins, and fried onions. Finished with ghee, cinnamon powder, and served with a side of tomato salsa. (350g)", meta: "659 kcal · Protein 29.2g · Fat 26.6g · Carbs 76.3g" },
+      { name: "Beef Steak & Roasted Potato", price: 65.00, desc: "Pan-grilled beef steak topped with creamy mushroom sauce, served alongside roasted potatoes. (320g)", meta: "454 kcal · Protein 22.4g · Fat 24.7g · Carbs 34.3g" },
+      { name: "Chicken Biryani", price: 45.00, desc: "Aromatic basmati rice and succulent chicken pieces cooked separately, mixed with coriander and mint leaves, ginger, garlic paste, lemon juice, and ghee. Flavored with mild Indian spices. Garnished with cashew nuts and fried onions. (400g)", meta: "433 kcal · Protein 29.4g · Fat 11.5g · Carbs 50.6g" },
+      { name: "Teriyaki Salmon", price: 55.00, desc: "Grilled salmon fillet glazed with a savory teriyaki sauce, served with steamed rice, boiled carrots, edamame beans, and asparagus, accompanied by extra teriyaki sauce. (400g)", meta: "602 kcal · Protein 53.6g · Fat 17.8g · Carbs 52.7g" },
+      { name: "Sweet Chilli Chicken", price: 45.00, desc: "Tender pieces of chicken, stir-fried in a sweet and chilli sauce with bell pepper, garnished with sesame seeds and spring onions. Served with steamed rice. (400g)", meta: "392 kcal · Protein 26.4g · Fat 3.2g · Carbs 59.4g" },
+      { name: "Grilled Chicken with Veg", price: 55.00, desc: "Juicy grilled chicken breast served with lightly seasoned and perfectly cooked vegetables. Accompanied by a rich mushroom sauce. (350g)", meta: "352 kcal · Protein 35.6g · Fat 17.3g · Carbs 13.1g" },
+      { name: "Beef Protein Pack", price: 45.00, desc: "Perfectly cooked premium beef steak, seasoned to perfection with bold sauce and freshly ground pepper. Pan juice sauce adds a tangy kick. (120g)", meta: "237 kcal · Protein 18.80g · Fat 11.95g · Carbs 3.90g" },
+      { name: "Chicken Protein Pack", price: 32.00, desc: "Tender chicken breast, infused with creamy coconut and fragrant Thai paste for a rich, velvety flavor. Finished with a luscious peanut cream sauce. (150g)", meta: "250 kcal · Protein 32.73g · Fat 11.57g · Carbs 3.91g" },
+      { name: "Bangkok Beef With Mashed Potato", price: 55.00, desc: "Tender minced beef, slow-cooked with tomatoes, onions, and garlic for a deep, aromatic taste. Served alongside velvety mashed potatoes. (300g)", meta: "264 kcal · Protein 27.97g · Fat 11.59g · Carbs 13.86g" },
+      { name: "Roasted Potatoes", price: 28.00, desc: "Crispy golden baby red potatoes, roasted to perfection and infused with aromatic herbs. A velvety drizzle of spicy mayonnaise adds a bold kick. (200g)", meta: "160 kcal · Protein 4.14g · Fat 0.27g · Carbs 35.26g" },
+      { name: "Pasta With Beef Bolognese", price: 55.00, desc: "Tender conchiglie pasta cradles a rich, slow-simmered beef Bolognese made with aromatic garlic, chopped onion, celery, and thyme. Finished with fresh basil leaves and a generous sprinkle of Parmesan cheese.", meta: "423 kcal · Protein 39.63g · Fat 11.89g · Carbs 36.66g" },
+      { name: "Beef Shawarma", price: 36.00, desc: "Spiced beef, crispy potato bites, tangy turnip pickles and creamy tahini mayo, all wrapped in a soft tortilla.", meta: "526 kcal · Protein 33.18g · Fat 22.28g · Carbs 37.6g" },
+      { name: "Chicken Tikka With Rice", price: 50.00, desc: "Creamy, mildly spiced yogurt-marinated chicken tikka served over fragrant leaf rice, infused with garlic, onion powder, and lemon. Topped with fresh coriander, mint leaves, and cherry tomatoes.", meta: "438 kcal · Protein 32.99g · Fat 7.69g · Carbs 55.28g" },
+      { name: "Chicken Shawarma", price: 24.00, desc: "Juicy grilled chicken, crisp gherkin pickles, and a velvety garlic-tahini drizzle come together in this clean, flavor-rich wrap. Wrapped in a soft whole wheat tortilla.", meta: "477 kcal · Protein 33.92g · Fat 19.42g · Carbs 37.6g" },
+      { name: "Falafel Wrap", price: 26.00, desc: "Crispy chickpea patty, fresh salad mix, golden potato bites, creamy garlic-tahini, and spicy-smooth sriracha Philadelphia sauce - all wrapped in a soft tortilla. 100% vegetarian.", meta: "453 kcal · Protein 12.15g · Fat 18.51g · Carbs 46.53g" },
+      { name: "Pasta with Chicken & Cream", price: 45.00, desc: "Penne pasta mixed in a light cream sauce with Parmesan cheese, chicken, mushrooms, basil leaves, and rosemary, garnished with extra Parmesan cheese. (450g)", meta: "596 kcal · Protein 41.4g · Fat 11.9g · Carbs 42.7g" },
+      { name: "Pasta with Shrimps", price: 55.00, desc: "Tagliatelle pasta tossed with herb-marinated shrimp in a blend of red and white sauces, finished with a garnish of grated Parmesan cheese. (400g)", meta: "540 kcal · Protein 19.2g · Fat 8.7g · Carbs 38.6g" },
+      { name: "Murabyan Shrimp", price: 45.00, desc: "Fragrant basmati rice cooked with tender shrimp, slow‑caramelized onions and a delicate blend of spices. Finished with saffron for aroma and depth and served with traditional daqoos sauce. (430g)", meta: "508 kcal · Protein 23.07g · Fat 16.10g · Carbs 65.87g" },
+      { name: "Chicken Sliders", price: 36.00, desc: "Fresh minced chicken patty blended with herbs and spices, layered with light mayo, light cheese, homemade Mexican sauce, crisp lolo Bianda and all served in soft homemade slider bread.", meta: "440 kcal · Protein 24.83g · Fat 19.65g · Carbs 34.87g" },
+      { name: "Beef Sliders", price: 36.00, desc: "Rich minced beef patty blended with herbs and spices, topped with mild cheese, crisp lolo bianda, homemade butter ranch and tomato sauce, all served in soft homemade slider bread.", meta: "475 kcal · Protein 28.93g · Fat 24.23g · Carbs 34.87g" },
+      { name: "Chicken Twister Wrap", price: 29.00, desc: "Golden crumbed fresh chicken wrapped with juicy tomato, crisp iceberg lettuce, and a touch of light cheese. Finished with a mild, oil-free spicy sauce.", meta: "349 kcal · Protein 28.32g · Fat 14.98g · Carbs 21.39g" },
+      { name: "Chicken Caesar Wrap", price: 29.00, desc: "Crunchy baby lettuce, tender chicken, parmesan cheese, cherry tomatoes and golden croutons tossed in creamy Caesar dressing, wrapped in a soft tortilla. Served cold.", meta: "386 kcal · Protein 34.16g · Fat 18.2g · Carbs 16.8g" },
+      { name: "Granola", price: 24.00, desc: "Creamy Greek yogurt topped with fresh blueberries and raspberries. Served with a side of maple syrup–roasted granola seeds and a portion of honey. (250g)", meta: "493 kcal · Protein 20.9g · Fat 7.9g · Carbs 90.8g" },
+      { name: "Watermelon Pot", price: 18.00, desc: "Juicy watermelon cubes paired with a side of crumbly feta cheese. A refreshing sweet-and-salty combo. (220g)", meta: "75 kcal · Protein 1.5g · Fat 0.3g · Carbs 18.8g" },
+      { name: "Kale Quinoa Pot", price: 18.00, desc: "A nutrient-dense blend of fresh kale and protein-rich quinoa, served with a side of Italian dressing. (130g)", meta: "194 kcal · Protein 5.33g · Fat 6.5g · Carbs 28.1g" },
+      { name: "Pomegranate Pot", price: 18.00, desc: "Fresh pomegranate seeds served chilled, offering a burst of natural sweetness and antioxidants. (150g)", meta: "122 kcal · Protein 1.71g · Fat 0.4g · Carbs 30.9g" },
+      { name: "Cream of Veg Soup", price: 19.00, desc: "A smooth, hearty blend of potato, carrot, beans, celery, leeks, and mushrooms, gently simmered and finished with a touch of cream. (380g)", meta: "211 kcal · Protein 9.2g · Fat 9.8g · Carbs 22.5g" },
+      { name: "Green Apple Pot", price: 16.00, desc: "Crisp slices of fresh green apple served with a side of peanut butter. A satisfying balance of tart and creamy.", meta: "348 kcal · Protein 11.7g · Fat 22.9g · Carbs 30.9g" },
+      { name: "Mix Fruit", price: 22.00, desc: "A vibrant mix of cubed mango, grapes, pomegranate, and kiwi, served fresh for a naturally sweet and nutrient-rich treat. (170g)", meta: "131 kcal · Protein 1.66g · Fat 0.65g · Carbs 33.11g" },
+      { name: "Veg Sticks", price: 19.00, desc: "Fresh-cut carrot, celery, and cucumber sticks served with a side of creamy ranch sauce. (170g)", meta: "46 kcal · Protein 1.7g · Fat 0.3g · Carbs 11.1g" },
+      { name: "Lentil Soup", price: 19.00, desc: "A smooth and hearty blend of lentils, carrot, celery, and garlic, gently cooked and finished with a touch of cream. (380ml)", meta: "186 kcal · Protein 10.42g · Fat 4.59g · Carbs 26.61g" },
+      { name: "Corn Salad", price: 19.00, desc: "A refreshing mix of sweet corn, cucumber, and tomato, served fresh with a side of Italian dressing. (180g)", meta: "194 kcal · Protein 2.3g · Fat 13.4g · Carbs 9.6g" },
+      { name: "Beetroot Hummus", price: 20.00, desc: "Vibrant blend of organic beetroot, boiled chickpeas, tahini, lemon juice, and garlic. Naturally rich in antioxidants and fiber. (180g)", meta: "201 kcal · Protein 10.5g · Fat 4.7g · Carbs 30.8g" },
+      { name: "Guacamole Pot", price: 24.00, desc: "Mashed avocado blended with coriander leaves, lemon juice, salt, and pepper. Served with a side of pizza-flavoured chips. (180g)", meta: "220 kcal · Protein 2.7g · Fat 20.4g · Carbs 11.1g" },
+      { name: "Mix Berries Pot", price: 18.00, desc: "A refreshing blend of blueberry, blackberry, and strawberry, rich in antioxidants and natural sweetness. (130g)", meta: "66 kcal · Protein 1.2g · Fat 0.64g · Carbs 15.9g" },
+      { name: "Pineapple Pot", price: 18.00, desc: "Fresh, juicy pineapple chunks served chilled for a naturally sweet, refreshing treat. (220g)", meta: "110 kcal · Protein 1.24g · Fat 0.28g · Carbs 29g" },
+      { name: "Tuna Sandwich", price: 26.00, desc: "Two slices of homemade Swedish bread, spread with pesto sauce, filled with a flavorful tuna mixture, and finished with sundried tomatoes. Grilled to perfection. (160g)", meta: "268 kcal · Protein 18.1g · Fat 10.7g · Carbs 20.4g" },
+      { name: "Halloumi Sandwich", price: 29.00, desc: "Two slices of homemade Swedish bread, spread with cream cheese and olive paste, filled with grilled halloumi cheese, baby rocca, and sundried tomatoes. Grilled to perfection. (175g)", meta: "261 kcal · Protein 10.2g · Fat 10.3g · Carb 20.7g" },
+      { name: "Turkey And Cheese Sandwich", price: 25.00, desc: "Two slices of homemade Swedish bread, spread with mayo, topped with turkey slices and mozzarella cheese, then grilled to perfection. (165g)", meta: "175 kcal · Protein 10.7g · Fat 4.9g · Carbs 21.2g" },
+      { name: "Grilled Mozzarella Sandwich", price: 24.00, desc: "Two slices of homemade Swedish bread, spread with pesto sauce, filled with mozzarella cheese and sundried tomatoes, then grilled to perfection. (145g)", meta: "240 kcal · Protein 9.7g · Fat 12.9g · Carbs 20.8g" },
+      { name: "Spicy Tuna Sandwich", price: 26.00, desc: "Two slices of homemade Swedish bread, spread with a zesty pesto sauce, filled with a spicy tuna mixture, and topped with sundried tomatoes, jalapeños, and Tabasco. Grilled to perfection. (160g)", meta: "268 kcal · Protein 18.1g · Fat 10.7g · Carbs 20.4g" },
+      { name: "Egg Mayo Sandwich", price: 24.00, desc: "Two slices of homemade Swedish bread, generously spread with a creamy egg mixture, mozzarella cheese, and a hint of black pepper. (180g)", meta: "243 kcal · Protein 11.7g · Fat 12.6g · Carbs 19.4g" },
+      { name: "Chicken Avocado Sandwich", price: 26.00, desc: "Two slices of homemade Swedish bread, spread with a creamy chicken mixture, and topped with a few slices of avocado. (165g)", meta: "224 kcal · Protein 13.7g · Fat 8.1g · Carbs 21.6g" },
+      { name: "Vanilla English Cake", price: 19.00, desc: "Elegant Vanilla English Cake made with premium ingredients including eggs, flour, butter, and sugar. Baked to perfection. (130g)", meta: "380 kcal · Protein 6.7g · Fat 21.1g · Carbs 35g" },
+      { name: "Banana Chocolate Bread", price: 19.00, desc: "Exquisite banana chocolate bread crafted with eggs, flour, butter, sugar, ripe bananas, premium chocolate, and crunchy walnuts. (130g)", meta: "332 kcal · Protein 6.4g · Fat 14.9g · Carbs 63g" },
+      { name: "Orange Cake", price: 19.00, desc: "Crafted with premium ingredients including eggs, flour, butter, sugar, and fresh oranges. Baked to perfection for a citrusy delight. (130g)", meta: "376 kcal · Protein 3.7g · Fat 18.7g · Carbs 48.7g" },
+      { name: "Sweet Potato Cake", price: 19.00, desc: "Expertly crafted with premium ingredients including eggs, flour, butter, sugar, and sweet potato. Baked to perfection. (130g)", meta: "494 kcal · Protein 10.1g · Fat 27.4g · Carbs 54.5g" },
+      { name: "Dates Cake", price: 19.00, desc: "Crafted with premium ingredients including eggs, flour, butter, sugar, dates, and almond powder. Baked to perfection. (130g)", meta: "195.8 kcal · Protein 3.4g · Fat 5.4g · Carbs 35.1g" },
+      { name: "Brownies", price: 18.00, desc: "Expertly crafted with premium ingredients including eggs, flour, butter, sugar, and rich chocolate. Baked to perfection. (35g)", meta: "133 kcal · Protein 1.67g · Fat 4.82g · Carbs 21.89g" },
+      { name: "Snickers Bar", price: 15.00, desc: "Made with dates paste and peanut butter with oats mix, caramel spread, topped with crunchy peanuts, and finished with a chocolate coating. (80g)", meta: "236 kcal · Protein 2.2g · Fat 3.8g · Carbs 12.4g" },
+      { name: "Oatmeal Choco Cookies", price: 12.00, desc: "Made with a blend of flour, creamy butter, and sugar, combined with hearty oats and rich chocolate chips. Baked to perfection for a golden, crisp exterior and soft, chewy center. (35g)", meta: "200 kcal · Protein 3.3g · Fat 10g · Carbs 26.2g" },
+      { name: "Peanut Butter Protein Ball", price: 12.00, desc: "Rich and flavorful peanut butter protein balls made with creamy peanut butter, natural honey, wholesome oat and chocolate chips. (40g)", meta: "250 kcal · Protein 9.5g · Fat 10.1g · Carbs 42.6g" },
+      { name: "Almond Croissant", price: 18.00, desc: "A buttery, flaky croissant filled with rich almond cream, topped with toasted almonds and a dusting of powdered sugar. (130g)", meta: "364 kcal · Protein 9.1g · Fat 22.7g · Carbs 31.7g" },
+      { name: "Plain Croissant", price: 10.00, desc: "A buttery, flaky pastry with a golden, crisp exterior and soft, layered interior. (80g)", meta: "244 kcal · Protein 4.9g · Fat 12.6g · Carbs 27.4g" },
+      { name: "Vanilla Muffin", price: 14.00, desc: "Baked with premium flour, farm-fresh eggs, rich butter and pure vanilla essence, lightly sweetened for a soft, delicate flavor.", meta: "362 kcal · Protein 5.24g · Fat 22.05g · Carbs 37.2g" },
+      { name: "Blueberry Muffin", price: 18.00, desc: "Crafted with premium flour, farm-fresh eggs, rich butter and pure essence, lightly sweetened for a soft texture and delicate flavor. Filled with juicy blueberries.", meta: "398 kcal · Protein 5.32g · Fat 22.07g · Carbs 46g" },
+      { name: "Chocolate Muffin", price: 18.00, desc: "Soft, mildly sweet muffin made with premium ingredients, mixed with semi chocolate chips throughout and sprinkled on top.", meta: "434 kcal · Protein 5.87g · Fat 26.55g · Carbs 46.41g" }
+    ];
+
+    // ================================================================
+    // GHOSTBOT AI PERSONALITY
+    // ================================================================
+    const aiPhrases = {
+      welcome: [
+        "GhostBot online. Neural menu scan complete — 64 items indexed. How can I assist?",
+        "GhostBot AI initialized. I've parsed the full menu. Ask me anything.",
+        "GhostBot ready. My algorithms have indexed every dish. What are you craving?"
+      ],
+      singleResult: [
+        "Direct match locked. Here's the full breakdown:",
+        "One item matches your query with high confidence:",
+        "Neural match found. Here are the details:"
+      ],
+      multipleResults: [
+        "I've detected several matches in the menu matrix:",
+        "Multiple items correlate with your query:",
+        "Scanning menu... found these matches:"
+      ],
+      noResults: [
+        "No items found in the current menu index. Try 'chicken', 'salad', 'pasta', or 'cake'.",
+        "My neural search returned zero results. Could you refine the query?",
+        "Hmm, nothing matched. Try a different keyword — maybe 'beef', 'rice', or 'sandwich'."
+      ],
+      suggestionClick: [
+        "Pulling full profile for",
+        "Analyzing item data for",
+        "Retrieving detailed record for"
+      ]
+    };
+
+    function pick(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    // ================================================================
+    // DOM refs
+    // ================================================================
+    const chatMessages = document.getElementById('chatMessages');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const liveTimeEl = document.getElementById('liveTime');
+
+    // ================================================================
+    // Live clock
+    // ================================================================
+    function updateTime() {
+      const now = new Date();
+      liveTimeEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // ================================================================
+    // Helpers
+    // ================================================================
+    const formatPrice = (p) => p.toFixed(2) + ' QR';
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ================================================================
+    // Add message
+    // ================================================================
+    function addMessage(sender, htmlContent) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${sender}`;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.textContent = sender === 'bot' ? '👻' : '👤';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.innerHTML = htmlContent;
+
+      messageDiv.appendChild(avatar);
+      messageDiv.appendChild(bubble);
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // ================================================================
+    // Add bot message with typing simulation
+    // ================================================================
+    function addBotMessage(htmlContent, delay = 350) {
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'message bot';
+      typingDiv.id = 'typingIndicator';
+      typingDiv.innerHTML = `
+        <div class="avatar">👻</div>
+        <div class="bubble" style="padding: 14px 22px;">
+          <div class="typing-indicator"><span></span><span></span><span></span></div>
+        </div>
+      `;
+      chatMessages.appendChild(typingDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      setTimeout(() => {
+        const existing = document.getElementById('typingIndicator');
+        if (existing) existing.remove();
+        addMessage('bot', htmlContent);
+      }, delay);
+    }
+
+    // ================================================================
+    // Build item detail card
+    // ================================================================
+    function buildItemCard(item) {
+      return `
+        <div class="item-detail-card">
+          <div class="detail-name">
+            <span>${escapeHtml(item.name)}</span>
+            <span class="detail-price">${formatPrice(item.price)}</span>
+          </div>
+          <div class="detail-desc">${escapeHtml(item.desc)}</div>
+          <div class="detail-meta"><span>${escapeHtml(item.meta)}</span></div>
+        </div>
+      `;
+    }
+
+    // ================================================================
+    // Build suggestion list
+    // ================================================================
+    function buildSuggestionList(items, query) {
+      if (!items.length) return '';
+      let html = '<div class="suggestion-list">';
+      items.forEach((item) => {
+        let displayName = escapeHtml(item.name);
+        if (query && query.trim().length > 0) {
+          const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+          displayName = escapeHtml(item.name).replace(regex, '<span class="highlight">$1</span>');
+        }
+        html += `
+          <div class="suggestion-item" data-name="${escapeHtml(item.name)}">
+            <span class="item-name">${displayName}</span>
+            <span class="item-price">${formatPrice(item.price)}</span>
+          </div>
+        `;
+      });
+      html += '</div>';
+      return html;
+    }
+
+    // ================================================================
+    // Search logic
+    // ================================================================
+    function searchMenu(query) {
+      const q = query.trim().toLowerCase();
+      if (!q) return menuData;
+
+      const exact = menuData.filter(item => item.name.toLowerCase() === q);
+      if (exact.length) return exact;
+
+      const startsWith = menuData.filter(item => item.name.toLowerCase().startsWith(q));
+      if (startsWith.length) return startsWith;
+
+      const nameContains = menuData.filter(item => item.name.toLowerCase().includes(q));
+      if (nameContains.length) return nameContains;
+
+      const descContains = menuData.filter(item => item.desc.toLowerCase().includes(q));
+      if (descContains.length) return descContains;
+
+      return [];
+    }
+
+    // ================================================================
+    // Handle search
+    // ================================================================
+    function handleSearch() {
+      const rawQuery = userInput.value.trim();
+      if (!rawQuery) {
+        addBotMessage('Please enter a search term so I can scan the menu. Try "salad", "chicken", "pasta", or "cake".');
+        return;
+      }
+
+      addMessage('user', escapeHtml(rawQuery));
+      userInput.value = '';
+      userInput.focus();
+
+      const results = searchMenu(rawQuery);
+
+      if (results.length === 0) {
+        addBotMessage(
+          `<strong>${pick(aiPhrases.noResults)}</strong>` +
+          `<div class="ai-flavor"><span class="spark">✦</span> GhostBot neural search · 0 matches</div>`
+        );
+        return;
+      }
+
+      if (results.length === 1) {
+        const item = results[0];
+        addBotMessage(
+          `${pick(aiPhrases.singleResult)}<br>${buildItemCard(item)}` +
+          `<div class="ai-flavor"><span class="spark">✦</span> GhostBot confidence: 99.8% · direct match</div>`
+        );
+        return;
+      }
+
+      const listHtml = buildSuggestionList(results, rawQuery);
+      const countText = results.length === menuData.length
+        ? `I've indexed <strong>${results.length}</strong> menu items. Here they are:`
+        : `<strong>${results.length}</strong> items correlate with your query:`;
+
+      addBotMessage(
+        `${pick(aiPhrases.multipleResults)}<br>${countText}${listHtml}` +
+        `<div class="time-footer"><span class="hint-icon">👆</span> Tap any item for a full profile</div>` +
+        `<div class="ai-flavor"><span class="spark">✦</span> GhostBot ranked results by relevance</div>`
+      );
+    }
+
+    // ================================================================
+    // Event delegation for suggestion clicks
+    // ================================================================
+    chatMessages.addEventListener('click', (e) => {
+      const suggestion = e.target.closest('.suggestion-item');
+      if (!suggestion) return;
+
+      const itemName = suggestion.getAttribute('data-name');
+      const item = menuData.find(i => i.name === itemName);
+      if (!item) return;
+
+      addMessage('user', `Show details for "${escapeHtml(itemName)}"`);
+      addBotMessage(
+        `${pick(aiPhrases.suggestionClick)} <strong>${escapeHtml(itemName)}</strong>:${buildItemCard(item)}` +
+        `<div class="ai-flavor"><span class="spark">✦</span> GhostBot retrieved item profile from neural cache</div>`
+      );
+    });
+
+    // ================================================================
+    // Welcome message
+    // ================================================================
+    function showWelcome() {
+      const total = menuData.length;
+      const welcomeText = pick(aiPhrases.welcome);
+      addBotMessage(
+        `<strong>${welcomeText}</strong><br><br>` +
+        `I'm <strong>GhostBot</strong> — your AI-powered menu assistant. I can help you find any of our <strong>${total}</strong> items, ` +
+        `from starters and salads to main courses, desserts, and drinks.<br><br>` +
+        `Try searching for <strong>"chicken"</strong>, <strong>"pasta"</strong>, <strong>"salad"</strong>, <strong>"cake"</strong>, or a specific dish name.` +
+        `<div class="ai-flavor"><span class="spark">✦</span> GhostBot v2.4 · neural menu index loaded · ${total} items</div>`
+      );
+    }
+
+    // ================================================================
+    // Event listeners
+    // ================================================================
+    userInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleSearch();
+      }
+    });
+
+    sendBtn.addEventListener('click', handleSearch);
+
+    // ================================================================
+    // Start
+    // ================================================================
+    showWelcome();
+  </script>
+</body>
+</html>
